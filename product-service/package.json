@@ -1,0 +1,9 @@
+{
+  "name": "product-service",
+  "version": "0.1.0",
+  "scripts": {
+    "deploy": "cdk deploy",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy"
+  }
+}
