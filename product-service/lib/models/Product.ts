@@ -3,4 +3,5 @@ export type Product = {
   id: string;
   price: number;
   title: string;
+  count: number;
 };
