@@ -1,8 +1,8 @@
 module.exports = {
   testEnvironment: "node",
-  roots: ["<rootDir>/test"],
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["**/test/**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": "ts-jest",
   },
+  collectCoverageFrom: ["{lib,bin}/**/*.ts"],
 };
