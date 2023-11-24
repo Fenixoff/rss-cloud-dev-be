@@ -8,7 +8,7 @@ const getProductsById = async (
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
   const id = event.pathParameters?.productId;
-  if (typeof id === "undefined") {
+  if (!id) {
     return buildResponse(400, { message: "ProductId is required" });
   }
 
