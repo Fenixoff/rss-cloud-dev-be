@@ -3,7 +3,7 @@ import { buildResponse } from "../lib/utils";
 import { products } from "../data/products";
 
 jest.mock("../lib/utils", () => ({
-  buildResponse: jest.fn(),
+  buildResponse: jest.fn().mockReturnValue("testMockResponse"),
 }));
 
 jest.mock("../data/products", () => ({
@@ -23,8 +23,10 @@ describe("getProductsList", () => {
   });
 
   it("should call buildResponse with statusCode 200 with products array", async () => {
-    await handler();
+    const response = await handler();
 
     expect(buildResponse).toHaveBeenCalledWith(200, products);
+
+    expect(response).toBe("testMockResponse");
   });
 });

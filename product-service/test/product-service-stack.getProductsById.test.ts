@@ -4,7 +4,7 @@ import { buildResponse } from "../lib/utils";
 import { products } from "../data/products";
 
 jest.mock("../lib/utils", () => ({
-  buildResponse: jest.fn(),
+  buildResponse: jest.fn().mockReturnValue("testMockResponse"),
 }));
 
 jest.mock("../data/products", () => ({
@@ -28,11 +28,13 @@ describe("getProductsById", () => {
       pathParameters: {},
     };
 
-    await handler(event as APIGatewayProxyEventV2);
+    const response = await handler(event as APIGatewayProxyEventV2);
 
     expect(buildResponse).toHaveBeenCalledWith(400, {
       message: "ProductId is required",
     });
+
+    expect(response).toBe("testMockResponse");
   });
 
   it("should call buildResponse with statusCode 404 if product is not found", async () => {
@@ -40,11 +42,13 @@ describe("getProductsById", () => {
       pathParameters: { productId: "nonexistent-id" },
     };
 
-    await handler(event as unknown as APIGatewayProxyEventV2);
+    const response = await handler(event as unknown as APIGatewayProxyEventV2);
 
     expect(buildResponse).toHaveBeenCalledWith(404, {
       message: "Product not found",
     });
+
+    expect(response).toBe("testMockResponse");
   });
 
   it("should call buildResponse with statusCode 200 with the product if it exists", async () => {
@@ -52,8 +56,10 @@ describe("getProductsById", () => {
       pathParameters: { productId: products[0].id },
     };
 
-    await handler(event as unknown as APIGatewayProxyEventV2);
+    const response = await handler(event as unknown as APIGatewayProxyEventV2);
 
     expect(buildResponse).toHaveBeenCalledWith(200, products[0]);
+
+    expect(response).toBe("testMockResponse");
   });
 });
