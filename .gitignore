@@ -3,6 +3,7 @@
 *.d.ts
 node_modules
 coverage
+.vscode
 
 # CDK asset staging directory
 .cdk.staging
