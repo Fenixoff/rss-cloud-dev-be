@@ -46,7 +46,7 @@ const ITEMS_COUNT = 150;
               id: uuid,
               title: `Product ${i}`,
               description: `Quite long description of item ${i}`,
-              price: ((1 - Math.random()) * 1000).toFixed(2),
+              price: +((1 - Math.random()) * 1000).toFixed(2),
             },
           },
         },
