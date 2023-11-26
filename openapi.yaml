@@ -35,6 +35,44 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Product"
+    post:
+      tags:
+        - products
+      summary: Creates or updates a product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: Product was created or updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    default: Poduct updated
+        "400":
+          description: Request body doesn't contain valid `Product` data
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        default: Request body is required
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        default: Product is not valid
   /products/{productId}:
     get:
       tags:

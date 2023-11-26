@@ -64,6 +64,17 @@ export class ProductServiceStack extends Stack {
         },
       },
     );
+    const createProductHandler = new nodejs.NodejsFunction(
+      this,
+      "createProduct",
+      {
+        runtime: Runtime.NODEJS_20_X,
+        environment: {
+          PRODUCT_TABLE: productTable.tableName,
+          STOCK_TABLE: stockTable.tableName,
+        },
+      },
+    );
 
     const grants = [
       productTable.grantReadData(productsListHandler),
@@ -71,6 +82,9 @@ export class ProductServiceStack extends Stack {
 
       productTable.grantReadData(productsByIdHandler),
       stockTable.grantReadData(productsByIdHandler),
+
+      productTable.grantWriteData(createProductHandler),
+      stockTable.grantWriteData(createProductHandler),
     ];
     grants.forEach((grant) => grant.assertSuccess());
 
@@ -82,6 +96,10 @@ export class ProductServiceStack extends Stack {
       "ProductsByIdIntegration",
       productsByIdHandler,
     );
+    const createProductIntegration = new HttpLambdaIntegration(
+      "CreateProductIntegration",
+      createProductHandler,
+    );
 
     const httpApi = new apigwv2.HttpApi(this, "ProductServiceApi", {
       corsPreflight: {
@@ -92,6 +110,7 @@ export class ProductServiceStack extends Stack {
           apigwv2.CorsHttpMethod.POST,
         ],
         allowOrigins: ["*"],
+        allowHeaders: ["content-type", "authorization"],
         maxAge: Duration.days(1),
       },
       createDefaultStage: false,
@@ -107,6 +126,12 @@ export class ProductServiceStack extends Stack {
       path: "/products/{productId}",
       methods: [apigwv2.HttpMethod.GET],
       integration: productsByIdIntegration,
+    });
+
+    httpApi.addRoutes({
+      path: "/products",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: createProductIntegration,
     });
 
     const devStage = new apigwv2.HttpStage(this, "DevStage", {
