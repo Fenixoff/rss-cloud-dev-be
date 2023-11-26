@@ -58,15 +58,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/Product"
         "400":
-          description: "`productId` wasn't provided"
+          description: "`productId` wasn't provided or has wrong format"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    default: ProductId is required
+                oneOf:
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        default: ProductId is required
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        default: ProductId is not valid
         "404":
           description: Product not found
           content:
