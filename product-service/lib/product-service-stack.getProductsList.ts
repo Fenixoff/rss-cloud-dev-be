@@ -83,11 +83,11 @@ const scanTable = async (
         break;
       } catch (error) {
         if (error instanceof ProvisionedThroughputExceededException) {
-          retriesCount++;
-
           await new Promise((resolve) =>
             setTimeout(resolve, 500 * Math.pow(2, retriesCount)),
           );
+
+          retriesCount++;
         } else {
           throw error;
         }
