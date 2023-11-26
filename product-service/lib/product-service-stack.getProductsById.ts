@@ -37,18 +37,25 @@ const getProductsById = async (
 };
 
 const getProductsByIdFromDb = async (id: string): Promise<Product | null> => {
+  const productsTable = process.env.PRODUCT_TABLE;
+  const stocksTable = process.env.STOCK_TABLE;
+
+  if (!productsTable || !stocksTable) {
+    throw new Error("Missing table name vars");
+  }
+
   const { Responses: responses } = await ddbDocClient.send(
     new TransactGetCommand({
       TransactItems: [
         {
           Get: {
-            TableName: process.env.PRODUCT_TABLE,
+            TableName: productsTable,
             Key: { id },
           },
         },
         {
           Get: {
-            TableName: process.env.STOCK_TABLE,
+            TableName: stocksTable,
             Key: { id },
           },
         },
