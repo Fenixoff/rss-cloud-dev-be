@@ -5,7 +5,7 @@ import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 import { buildResponse, errorResponse } from "./utils";
 import { ddbDocClient } from "./clients/dynamodb";
-import { Product } from "./models/Product";
+import { Product, isProduct } from "./models/Product";
 
 export { getProductsList as handler };
 
@@ -36,13 +36,18 @@ const getProductListFromDb = async (): Promise<Product[]> => {
     scanTable(stocksTable),
   ]);
 
-  return products.map(
-    (product) =>
-      ({
-        ...product,
-        count: stocks.find((stock) => stock.id === product.id)!.count,
-      }) as Product,
-  );
+  return products.map((product) => {
+    const result = {
+      ...product,
+      count: stocks.find((stock) => stock.id === product.id)!.count,
+    };
+
+    if (!isProduct(result)) {
+      throw Error("Got wrong product from DB");
+    }
+
+    return result;
+  });
 };
 
 const scanTable = async (

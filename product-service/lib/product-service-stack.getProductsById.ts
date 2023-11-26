@@ -3,7 +3,7 @@ import { validate as uuidValidate } from "uuid";
 
 import { buildResponse, errorResponse } from "./utils";
 import { ddbDocClient } from "./clients/dynamodb";
-import { Product } from "./models/Product";
+import { Product, isProduct } from "./models/Product";
 import { TransactGetCommand } from "@aws-sdk/lib-dynamodb";
 
 export { getProductsById as handler };
@@ -24,7 +24,7 @@ const getProductsById = async (
     }
 
     const selectedProduct = await getProductsByIdFromDb(id);
-    if (typeof selectedProduct === "undefined") {
+    if (!selectedProduct) {
       return buildResponse(404, { message: "Product not found" });
     }
 
@@ -34,9 +34,7 @@ const getProductsById = async (
   }
 };
 
-const getProductsByIdFromDb = async (
-  id: string,
-): Promise<Product | undefined> => {
+const getProductsByIdFromDb = async (id: string): Promise<Product | null> => {
   const { Responses: responses } = await ddbDocClient.send(
     new TransactGetCommand({
       TransactItems: [
@@ -62,9 +60,14 @@ const getProductsByIdFromDb = async (
 
   const [{ Item: product }, { Item: stock }] = responses;
 
-  if (!product || !stock) {
-    return undefined;
+  if (!product && !stock) {
+    return null;
   }
 
-  return { ...product, ...stock } as Product;
+  const result = { ...product, ...stock };
+  if (!isProduct(result)) {
+    throw new Error("Got wrong product from DB");
+  }
+
+  return result;
 };
