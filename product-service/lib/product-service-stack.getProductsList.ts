@@ -19,7 +19,9 @@ const getProductsList = async (
 
     const data = await getProductListFromDb();
     return buildResponse(200, data);
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     return errorResponse;
   }
 };

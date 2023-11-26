@@ -29,7 +29,9 @@ const getProductsById = async (
     }
 
     return buildResponse(200, selectedProduct);
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     return errorResponse;
   }
 };
