@@ -1,4 +1,4 @@
-import { APIGatewayProxyResultV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { ProvisionedThroughputExceededException } from "@aws-sdk/client-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
@@ -12,7 +12,7 @@ export { getProductsList as handler };
 const MAX_RETRIES = 5;
 
 const getProductsList = async (
-  event: APIGatewayProxyResultV2,
+  event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     console.log("Request event:", event);
