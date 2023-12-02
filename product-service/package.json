@@ -1,6 +1,9 @@
 {
   "name": "product-service",
   "version": "0.1.0",
+  "bin": {
+    "populate-products": "bin/populate-products.js"
+  },
   "scripts": {
     "deploy": "cdk deploy",
     "diff": "cdk diff",
@@ -8,6 +11,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "check": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "populate-products": "ts-node bin/populate-products.ts"
   }
 }

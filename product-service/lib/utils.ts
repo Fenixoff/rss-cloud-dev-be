@@ -4,17 +4,10 @@ export const buildResponse = (
   statusCode: number,
   responseBody: unknown,
 ): APIGatewayProxyResultV2 => {
-  let body: string;
-  try {
-    body =
-      typeof responseBody === "string"
-        ? responseBody
-        : JSON.stringify(responseBody);
-  } catch {
-    statusCode = 500;
-    body = '{"message":"Server error occurred"}';
-  }
-
+  const body =
+    typeof responseBody === "string"
+      ? responseBody
+      : JSON.stringify(responseBody);
   return {
     statusCode,
     body,
@@ -23,3 +16,8 @@ export const buildResponse = (
     },
   };
 };
+
+export const errorResponse = buildResponse(
+  500,
+  '{"message":"Server error occurred"}',
+);
