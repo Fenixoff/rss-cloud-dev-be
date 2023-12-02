@@ -1,6 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
-import { ProvisionedThroughputExceededException } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
 import { buildResponse, errorResponse } from "./utils";
@@ -8,8 +7,6 @@ import { ddbDocClient } from "./clients/dynamodb";
 import { Product, isProduct } from "./models/Product";
 
 export { createProduct as handler };
-
-const MAX_RETRIES = 5;
 
 const createProduct = async (
   event: APIGatewayProxyEventV2,
@@ -41,10 +38,7 @@ const createProduct = async (
   }
 };
 
-const saveProduct = async (
-  product: Product,
-  retries = MAX_RETRIES,
-): Promise<void> => {
+const saveProduct = async (product: Product): Promise<void> => {
   const productsTable = process.env.PRODUCT_TABLE;
   const stocksTable = process.env.STOCK_TABLE;
 
@@ -77,26 +71,5 @@ const saveProduct = async (
     ],
   });
 
-  let retriesCount = 0;
-  while (retriesCount < retries) {
-    try {
-      await ddbDocClient.send(command);
-
-      break;
-    } catch (error) {
-      if (error instanceof ProvisionedThroughputExceededException) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 500 * Math.pow(2, retriesCount)),
-        );
-
-        retriesCount++;
-      } else {
-        throw error;
-      }
-    }
-  }
-
-  if (retriesCount === retries) {
-    throw new Error("Max retries exceeded");
-  }
+  await ddbDocClient.send(command);
 };

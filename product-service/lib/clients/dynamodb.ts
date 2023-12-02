@@ -3,5 +3,7 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 export { ddbDocClient };
 
-const client = new DynamoDBClient({});
+const client = new DynamoDBClient({
+  maxAttempts: 10,
+});
 const ddbDocClient = DynamoDBDocumentClient.from(client);

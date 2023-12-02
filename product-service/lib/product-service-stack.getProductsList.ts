@@ -1,6 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { ProvisionedThroughputExceededException } from "@aws-sdk/client-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
 import { buildResponse, errorResponse } from "./utils";
@@ -8,8 +7,6 @@ import { ddbDocClient } from "./clients/dynamodb";
 import { Product, isProduct } from "./models/Product";
 
 export { getProductsList as handler };
-
-const MAX_RETRIES = 5;
 
 const getProductsList = async (
   event: APIGatewayProxyEventV2,
@@ -54,7 +51,6 @@ const getProductListFromDb = async (): Promise<Product[]> => {
 
 const scanTable = async (
   table: string,
-  retries = MAX_RETRIES,
 ): Promise<Record<string, NativeAttributeValue>[]> => {
   const command = new ScanCommand({
     TableName: table,
@@ -64,38 +60,17 @@ const scanTable = async (
 
   let finished = false;
   do {
-    let retriesCount = 0;
-    while (retriesCount < retries) {
-      try {
-        const { Items: items, LastEvaluatedKey: lastKey } =
-          await ddbDocClient.send(command);
+    const { Items: items, LastEvaluatedKey: lastKey } =
+      await ddbDocClient.send(command);
 
-        if (items) {
-          result.push(...items);
-        }
-
-        if (!lastKey) {
-          finished = true;
-        } else {
-          command.input.ExclusiveStartKey = lastKey;
-        }
-
-        break;
-      } catch (error) {
-        if (error instanceof ProvisionedThroughputExceededException) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 500 * Math.pow(2, retriesCount)),
-          );
-
-          retriesCount++;
-        } else {
-          throw error;
-        }
-      }
+    if (items) {
+      result.push(...items);
     }
 
-    if (retriesCount === retries) {
-      throw new Error("Max retries exceeded");
+    if (!lastKey) {
+      finished = true;
+    } else {
+      command.input.ExclusiveStartKey = lastKey;
     }
   } while (!finished);
 
