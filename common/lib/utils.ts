@@ -3,6 +3,9 @@ import { APIGatewayProxyResultV2 } from "aws-lambda";
 export const buildResponse = (
   statusCode: number,
   responseBody: unknown,
+  headers: Record<string, string> = {
+    "content-type": "application/json",
+  },
 ): APIGatewayProxyResultV2 => {
   const body =
     typeof responseBody === "string"
@@ -11,9 +14,7 @@ export const buildResponse = (
   return {
     statusCode,
     body,
-    headers: {
-      "content-type": "application/json",
-    },
+    headers,
   };
 };
 
