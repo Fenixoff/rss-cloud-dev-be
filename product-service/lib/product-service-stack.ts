@@ -27,8 +27,10 @@ export class ProductServiceStack extends Stack {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
       billing: dynamodb.Billing.provisioned({
-        readCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
-        writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
+        readCapacity: dynamodb.Capacity.fixed(5),
+        writeCapacity: dynamodb.Capacity.autoscaled({
+          maxCapacity: 5,
+        }),
       }),
     });
 
@@ -36,8 +38,10 @@ export class ProductServiceStack extends Stack {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
       billing: dynamodb.Billing.provisioned({
-        readCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
-        writeCapacity: dynamodb.Capacity.autoscaled({ maxCapacity: 5 }),
+        readCapacity: dynamodb.Capacity.fixed(5),
+        writeCapacity: dynamodb.Capacity.autoscaled({
+          maxCapacity: 5,
+        }),
       }),
     });
 
