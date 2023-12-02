@@ -1,5 +1,5 @@
 import { handler } from "../lib/product-service-stack.getProductsList";
-import { buildResponse } from "../lib/utils";
+import { buildResponse } from "../../common/lib/utils";
 import { products } from "../data/products";
 
 jest.mock("../lib/utils", () => ({

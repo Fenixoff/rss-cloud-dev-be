@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { NativeAttributeValue } from "@aws-sdk/util-dynamodb";
 
-import { buildResponse, errorResponse } from "./utils";
+import { buildResponse, errorResponse } from "../../common/lib/utils";
 import { ddbDocClient } from "./clients/dynamodb";
 import { Product, isProduct } from "./models/Product";
 
