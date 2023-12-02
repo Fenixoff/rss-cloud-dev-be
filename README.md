@@ -32,7 +32,9 @@ Runs `prettier` checking and formatting for all files.
 
 ## Links
 
-[API Gateway URL](https://z81yxjs31f.execute-api.eu-north-1.amazonaws.com/dev)
+[Product Service API Gateway URL](https://z81yxjs31f.execute-api.eu-north-1.amazonaws.com/dev)
+
+[Import Service API Gateway URL](https://tmno4nt3qg.execute-api.eu-north-1.amazonaws.com/dev)
 
 [Frontend Deployment URL](https://d2plsssco6ks4.cloudfront.net)
 

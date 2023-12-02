@@ -8,7 +8,7 @@ import {
 import { Construct } from "constructs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { Bucket } from "aws-cdk-lib/aws-s3";
+import { Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
 
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
@@ -24,6 +24,14 @@ export class ImportServiceStack extends Stack {
       autoDeleteObjects: true,
       enforceSSL: true,
       minimumTLSVersion: 1.2,
+      cors: [
+        {
+          allowedHeaders: ["*"],
+          allowedMethods: [HttpMethods.PUT],
+          allowedOrigins: ["*"],
+          maxAge: 3600,
+        },
+      ],
     });
 
     const lambdaDefaultProps = {
