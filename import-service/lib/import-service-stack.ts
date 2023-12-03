@@ -8,8 +8,9 @@ import {
 import { Construct } from "constructs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
+import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
+import * as s3 from "aws-cdk-lib/aws-s3";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 
@@ -19,7 +20,7 @@ export class ImportServiceStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const bucket = new Bucket(this, "ProductsBucket", {
+    const bucket = new s3.Bucket(this, "ProductsBucket", {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       enforceSSL: true,
@@ -27,7 +28,7 @@ export class ImportServiceStack extends Stack {
       cors: [
         {
           allowedHeaders: ["*"],
-          allowedMethods: [HttpMethods.PUT],
+          allowedMethods: [s3.HttpMethods.PUT],
           allowedOrigins: ["*"],
           maxAge: 3600,
         },
@@ -55,17 +56,21 @@ export class ImportServiceStack extends Stack {
 
     [
       bucket.grantWrite(importHandler),
-      bucket.grantReadWrite(parseHandler),
+      bucket.grantRead(parseHandler),
+      bucket.grantDelete(parseHandler),
+      bucket.grantPut(parseHandler),
     ].forEach((grant) => grant.assertSuccess());
+
+    parseHandler.addEventSource(
+      new S3EventSource(bucket, {
+        events: [s3.EventType.OBJECT_CREATED],
+        filters: [{ prefix: "uploaded/" }, { suffix: ".csv" }],
+      }),
+    );
 
     const importIntegration = new HttpLambdaIntegration(
       "ImportIntegration",
       importHandler,
-    );
-
-    const parseIntegration = new HttpLambdaIntegration(
-      "ParseIntegration",
-      parseHandler,
     );
 
     const httpApi = new apigwv2.HttpApi(this, "ImportServiceApi", {
