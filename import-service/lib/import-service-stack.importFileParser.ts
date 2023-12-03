@@ -21,11 +21,7 @@ const importFileParser: S3Handler = async (event) => {
     const file = (await client.send(new s3.GetObjectCommand(obj))).Body;
     if (file) {
       await Promise.all([
-        finished(
-          file.pipe(csv()).on("data", (data) => {
-            console.log(data);
-          }),
-        ),
+        parse(file),
 
         client.send(
           new s3.CopyObjectCommand({
@@ -38,4 +34,12 @@ const importFileParser: S3Handler = async (event) => {
       client.send(new s3.DeleteObjectCommand(obj));
     }
   }
+};
+
+const parse = async (stream: NodeJS.ReadableStream) => {
+  return finished(
+    stream.pipe(csv()).on("data", (data) => {
+      console.log(data);
+    }),
+  );
 };
