@@ -3,7 +3,7 @@ import { handler } from "../lib/import-service-stack.importProductsFile";
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-import { buildResponse } from "../../common/lib/utils";
+import { buildResponse } from "../../common/lib/utils/responses";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 jest.mock("@aws-sdk/client-s3");

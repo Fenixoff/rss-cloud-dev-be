@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { handler } from "../lib/product-service-stack.getProductsById";
-import { buildResponse } from "../../common/lib/utils";
+import { buildResponse } from "../../common/lib/utils/responses";
 import { products } from "../data/products";
 
 jest.mock("../lib/utils", () => ({

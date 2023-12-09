@@ -1,10 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { validate as uuidValidate } from "uuid";
 
-import { buildResponse, errorResponse } from "../../common/lib/utils";
-import { ddbDocClient } from "./clients/dynamodb";
-import { Product, isProduct } from "./models/Product";
-import { TransactGetCommand } from "@aws-sdk/lib-dynamodb";
+import { buildResponse, errorResponse } from "../../common/lib/utils/responses";
+import { getProductsByIdFromDb } from "./models/Product";
 
 export { getProductsById as handler };
 
@@ -34,49 +32,4 @@ const getProductsById = async (
 
     return errorResponse;
   }
-};
-
-const getProductsByIdFromDb = async (id: string): Promise<Product | null> => {
-  const productsTable = process.env.PRODUCT_TABLE;
-  const stocksTable = process.env.STOCK_TABLE;
-
-  if (!productsTable || !stocksTable) {
-    throw new Error("Missing table name vars");
-  }
-
-  const { Responses: responses } = await ddbDocClient.send(
-    new TransactGetCommand({
-      TransactItems: [
-        {
-          Get: {
-            TableName: productsTable,
-            Key: { id },
-          },
-        },
-        {
-          Get: {
-            TableName: stocksTable,
-            Key: { id },
-          },
-        },
-      ],
-    }),
-  );
-
-  if (!responses) {
-    throw new Error("Database error");
-  }
-
-  const [{ Item: product }, { Item: stock }] = responses;
-
-  if (!product && !stock) {
-    return null;
-  }
-
-  const result = { ...product, ...stock };
-  if (!isProduct(result)) {
-    throw new Error("Got wrong product from DB");
-  }
-
-  return result;
 };

@@ -1,10 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
-import { buildResponse, errorResponse } from "../../common/lib/utils";
-import { ddbDocClient } from "./clients/dynamodb";
-import { Product, isProduct } from "./models/Product";
+import { buildResponse, errorResponse } from "../../common/lib/utils/responses";
+import { isProduct, saveProduct } from "./models/Product";
 
 export { createProduct as handler };
 
@@ -36,40 +34,4 @@ const createProduct = async (
 
     return errorResponse;
   }
-};
-
-const saveProduct = async (product: Product): Promise<void> => {
-  const productsTable = process.env.PRODUCT_TABLE;
-  const stocksTable = process.env.STOCK_TABLE;
-
-  if (!productsTable || !stocksTable) {
-    throw new Error("Missing table name vars");
-  }
-
-  const { id, count, ...rest } = product;
-
-  const command = new TransactWriteCommand({
-    TransactItems: [
-      {
-        Put: {
-          TableName: productsTable,
-          Item: {
-            id,
-            ...rest,
-          },
-        },
-      },
-      {
-        Put: {
-          TableName: stocksTable,
-          Item: {
-            id,
-            count,
-          },
-        },
-      },
-    ],
-  });
-
-  await ddbDocClient.send(command);
 };

@@ -1,4 +1,4 @@
-import { buildResponse } from "../lib/utils";
+import { buildResponse } from "../lib/utils/responses";
 
 describe("buildResponse", () => {
   test("should build a response with status code, body, and headers", () => {
