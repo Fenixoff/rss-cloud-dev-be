@@ -8,15 +8,18 @@ import {
 import { Construct } from "constructs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 
 import {
   PRODUCT_SERVICE_API_DNS,
   PRODUCT_SERVICE_PRODUCT_TABLE_NAME,
   PRODUCT_SERVICE_STOCK_TABLE_NAME,
+  PRODUCT_SERVICE_CATALOG_QUEUE_ARN,
 } from "../../common/lib/constants";
 
 export class ProductServiceStack extends Stack {
@@ -45,40 +48,41 @@ export class ProductServiceStack extends Stack {
       }),
     });
 
+    const commonHandlerProps = {
+      runtime: Runtime.NODEJS_20_X,
+      environment: {
+        PRODUCT_TABLE: productTable.tableName,
+        STOCK_TABLE: stockTable.tableName,
+      },
+    };
+
     const productsListHandler = new nodejs.NodejsFunction(
       this,
       "getProductsList",
-      {
-        runtime: Runtime.NODEJS_20_X,
-        environment: {
-          PRODUCT_TABLE: productTable.tableName,
-          STOCK_TABLE: stockTable.tableName,
-        },
-      },
+      commonHandlerProps,
     );
 
     const productsByIdHandler = new nodejs.NodejsFunction(
       this,
       "getProductsById",
-      {
-        runtime: Runtime.NODEJS_20_X,
-        environment: {
-          PRODUCT_TABLE: productTable.tableName,
-          STOCK_TABLE: stockTable.tableName,
-        },
-      },
+      commonHandlerProps,
     );
+
     const createProductHandler = new nodejs.NodejsFunction(
       this,
       "createProduct",
-      {
-        runtime: Runtime.NODEJS_20_X,
-        environment: {
-          PRODUCT_TABLE: productTable.tableName,
-          STOCK_TABLE: stockTable.tableName,
-        },
-      },
+      commonHandlerProps,
     );
+
+    const catalogBatchProcessHandler = new nodejs.NodejsFunction(
+      this,
+      "catalogBatchProcess",
+      commonHandlerProps,
+    );
+
+    const catalogItemsQueue = new sqs.Queue(this, "catalogItemsQueue", {
+      enforceSSL: true,
+    });
 
     const grants = [
       productTable.grantReadData(productsListHandler),
@@ -89,6 +93,9 @@ export class ProductServiceStack extends Stack {
 
       productTable.grantWriteData(createProductHandler),
       stockTable.grantWriteData(createProductHandler),
+
+      productTable.grantWriteData(catalogBatchProcessHandler),
+      stockTable.grantWriteData(catalogBatchProcessHandler),
     ];
     grants.forEach((grant) => grant.assertSuccess());
 
@@ -144,6 +151,14 @@ export class ProductServiceStack extends Stack {
       autoDeploy: true,
     });
 
+    catalogBatchProcessHandler.addEventSource(
+      new SqsEventSource(catalogItemsQueue, {
+        batchSize: 5,
+        maxBatchingWindow: Duration.seconds(10),
+        reportBatchItemFailures: true,
+      }),
+    );
+
     new CfnOutput(this, "ApiDns", {
       value: httpApi.apiEndpoint,
       exportName: PRODUCT_SERVICE_API_DNS,
@@ -157,6 +172,11 @@ export class ProductServiceStack extends Stack {
     new CfnOutput(this, "StockTableName", {
       value: stockTable.tableName,
       exportName: PRODUCT_SERVICE_STOCK_TABLE_NAME,
+    });
+
+    new CfnOutput(this, "CatalogQueueArn", {
+      value: catalogItemsQueue.queueArn,
+      exportName: PRODUCT_SERVICE_CATALOG_QUEUE_ARN,
     });
   }
 }
