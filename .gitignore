@@ -8,3 +8,8 @@ coverage
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride

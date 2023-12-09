@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { validate as uuidValidate } from "uuid";
 
-import { buildResponse, errorResponse } from "./utils";
+import { buildResponse, errorResponse } from "../../common/lib/utils";
 import { ddbDocClient } from "./clients/dynamodb";
 import { Product, isProduct } from "./models/Product";
 import { TransactGetCommand } from "@aws-sdk/lib-dynamodb";

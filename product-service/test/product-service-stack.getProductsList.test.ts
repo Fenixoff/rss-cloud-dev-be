@@ -1,6 +1,7 @@
 import { handler } from "../lib/product-service-stack.getProductsList";
-import { buildResponse } from "../lib/utils";
+import { buildResponse } from "../../common/lib/utils";
 import { products } from "../data/products";
+import { APIGatewayProxyEventV2 } from "aws-lambda";
 
 jest.mock("../lib/utils", () => ({
   buildResponse: jest.fn().mockReturnValue("testMockResponse"),
@@ -23,7 +24,7 @@ describe("getProductsList", () => {
   });
 
   it("should call buildResponse with statusCode 200 with products array", async () => {
-    const response = await handler();
+    const response = await handler({} as APIGatewayProxyEventV2);
 
     expect(buildResponse).toHaveBeenCalledWith(200, products);
 
