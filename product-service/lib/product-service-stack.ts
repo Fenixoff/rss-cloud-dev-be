@@ -9,11 +9,13 @@ import { Construct } from "constructs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 import {
   PRODUCT_SERVICE_API_DNS,
@@ -48,6 +50,31 @@ export class ProductServiceStack extends Stack {
       }),
     });
 
+    const createProductTopic = new sns.Topic(this, "CreateProductTopic");
+    createProductTopic.addSubscription(
+      new EmailSubscription("azh.andrei@gmail.com", {
+        filterPolicyWithMessageBody: {
+          price: sns.FilterOrPolicy.filter(
+            sns.SubscriptionFilter.numericFilter({
+              greaterThan: 100,
+            }),
+          ),
+        },
+      }),
+    );
+
+    createProductTopic.addSubscription(
+      new EmailSubscription("a.z.h.andrei@gmail.com", {
+        filterPolicyWithMessageBody: {
+          price: sns.FilterOrPolicy.filter(
+            sns.SubscriptionFilter.numericFilter({
+              lessThanOrEqualTo: 100,
+            }),
+          ),
+        },
+      }),
+    );
+
     const commonHandlerProps = {
       runtime: Runtime.NODEJS_20_X,
       environment: {
@@ -77,7 +104,13 @@ export class ProductServiceStack extends Stack {
     const catalogBatchProcessHandler = new nodejs.NodejsFunction(
       this,
       "catalogBatchProcess",
-      commonHandlerProps,
+      {
+        ...commonHandlerProps,
+        environment: {
+          ...commonHandlerProps.environment,
+          SNS_TOPIC_ARN: createProductTopic.topicArn,
+        },
+      },
     );
 
     const catalogItemsQueue = new sqs.Queue(this, "catalogItemsQueue", {
@@ -96,6 +129,8 @@ export class ProductServiceStack extends Stack {
 
       productTable.grantWriteData(catalogBatchProcessHandler),
       stockTable.grantWriteData(catalogBatchProcessHandler),
+
+      createProductTopic.grantPublish(catalogBatchProcessHandler),
     ];
     grants.forEach((grant) => grant.assertSuccess());
 
