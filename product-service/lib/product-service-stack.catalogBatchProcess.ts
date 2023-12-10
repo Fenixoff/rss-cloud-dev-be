@@ -12,7 +12,7 @@ const catalogBatchProcess: SQSHandler = async (event) => {
   const snsTopic = process.env.SNS_TOPIC_ARN;
   if (!snsTopic) console.warn("SNS_TOPIC_ARN is not defined");
 
-  const promises = event.Records.map(async (item) => {
+  const promises = event.Records.map((item) => {
     const product = JSON.parse(item.body);
 
     if (!product.id) {
@@ -20,20 +20,24 @@ const catalogBatchProcess: SQSHandler = async (event) => {
     }
 
     if (isProduct(product)) {
-      let snsPromise;
-      if (snsTopic)
-        snsPromise = snsClient.send(
-          new PublishCommand({
-            Subject: "Product created",
-            Message: JSON.stringify(product),
-            TopicArn: snsTopic,
-          }),
-        );
-
       return Promise.allSettled([
-        saveProduct(product),
+        saveProduct(product).then(
+          () => {
+            return snsTopic
+              ? snsClient.send(
+                  new PublishCommand({
+                    Subject: "Product created",
+                    Message: JSON.stringify(product),
+                    TopicArn: snsTopic,
+                  }),
+                )
+              : null;
+          },
+          (reason) => {
+            throw reason;
+          },
+        ),
         item.messageId,
-        snsPromise,
       ]);
     } else {
       console.warn("Product is not valid: %o", product);
