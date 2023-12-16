@@ -4,6 +4,7 @@ import {
   RemovalPolicy,
   Stack,
   StackProps,
+  Fn,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
@@ -13,12 +14,26 @@ import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 
-import { IMPORT_SERVICE_API_DNS } from "../../common/lib/constants";
+import {
+  IMPORT_SERVICE_API_DNS,
+  PRODUCT_SERVICE_CATALOG_QUEUE_ARN,
+} from "../../common/lib/constants";
 
 export class ImportServiceStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    const catalogItemsQueueArn = Fn.importValue(
+      PRODUCT_SERVICE_CATALOG_QUEUE_ARN,
+    );
+
+    const catalogItemsQueue = sqs.Queue.fromQueueArn(
+      this,
+      "CatalogItemsQueue",
+      catalogItemsQueueArn,
+    );
 
     const bucket = new s3.Bucket(this, "ProductsBucket", {
       removalPolicy: RemovalPolicy.DESTROY,
@@ -48,17 +63,22 @@ export class ImportServiceStack extends Stack {
       lambdaDefaultProps,
     );
 
-    const parseHandler = new nodejs.NodejsFunction(
-      this,
-      "importFileParser",
-      lambdaDefaultProps,
-    );
+    const parseHandler = new nodejs.NodejsFunction(this, "importFileParser", {
+      ...lambdaDefaultProps,
+      environment: {
+        ...lambdaDefaultProps.environment,
+        CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
+      },
+    });
 
     [
       bucket.grantWrite(importHandler),
+
       bucket.grantRead(parseHandler),
       bucket.grantDelete(parseHandler),
       bucket.grantPut(parseHandler),
+
+      catalogItemsQueue.grantSendMessages(parseHandler),
     ].forEach((grant) => grant.assertSuccess());
 
     parseHandler.addEventSource(
