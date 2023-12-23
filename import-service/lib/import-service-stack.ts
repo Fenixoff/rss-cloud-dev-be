@@ -7,9 +7,13 @@ import {
   Fn,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { Runtime, Function } from "aws-cdk-lib/aws-lambda";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import {
+  HttpLambdaAuthorizer,
+  HttpLambdaResponseType,
+} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
@@ -17,6 +21,7 @@ import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 
 import {
+  AUTHORIZATION_SERVICE_AUTHORIZER_ARN,
   IMPORT_SERVICE_API_DNS,
   PRODUCT_SERVICE_CATALOG_QUEUE_ARN,
 } from "../../common/lib/constants";
@@ -93,10 +98,29 @@ export class ImportServiceStack extends Stack {
       importHandler,
     );
 
+    const authorizerHandlerArn = Fn.importValue(
+      AUTHORIZATION_SERVICE_AUTHORIZER_ARN,
+    );
+
+    const authorizerHandler = Function.fromFunctionArn(
+      this,
+      "AuthorizerHandler",
+      authorizerHandlerArn,
+    );
+
+    const authorizer = new HttpLambdaAuthorizer(
+      "basicAuthorizer",
+      authorizerHandler,
+      {
+        responseTypes: [HttpLambdaResponseType.SIMPLE],
+      },
+    );
+
     const httpApi = new apigwv2.HttpApi(this, "ImportServiceApi", {
       corsPreflight: {
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.HEAD],
         allowOrigins: ["*"],
+        allowHeaders: ["authorization"],
         maxAge: Duration.days(1),
       },
       createDefaultStage: false,
@@ -106,6 +130,7 @@ export class ImportServiceStack extends Stack {
       path: "/import",
       methods: [apigwv2.HttpMethod.GET],
       integration: importIntegration,
+      authorizer,
     });
 
     const devStage = new apigwv2.HttpStage(this, "DevStage", {

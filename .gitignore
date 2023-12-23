@@ -13,3 +13,6 @@ cdk.out
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# ENV
+.env
