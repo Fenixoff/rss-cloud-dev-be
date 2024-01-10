@@ -1,6 +1,6 @@
 {
   "name": "bff-service",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "BFF Service",
   "main": "server.js",
   "type": "module",

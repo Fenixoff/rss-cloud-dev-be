@@ -12,7 +12,7 @@ const proxy = httpProxy.createProxyServer({ changeOrigin: true });
 const cache = {};
 
 proxy.on("proxyRes", (proxyRes, req, res) => {
-  if (req.url === "/products") {
+  if (req.url === "/products" && req.method === "GET") {
     const chunks = [];
 
     proxyRes.on("data", (chunk) => {
@@ -28,13 +28,14 @@ proxy.on("proxyRes", (proxyRes, req, res) => {
   }
 });
 
-const server = createServer((req, res) => {
+createServer((req, res) => {
   const [_, service, path] = req.url.match(/^\/([^\/]+)(.*)$/);
   const target = rules[service];
 
   if (target) {
     if (
       req.url === "/product/products" &&
+      req.method === "GET" &&
       cache.body &&
       cache.time > Date.now() - cachingMsecs
     ) {
@@ -48,6 +49,4 @@ const server = createServer((req, res) => {
     res.setHeader("Content-Type", "text/plain");
     res.end("Cannot process request\n");
   }
-});
-
-server.listen(port);
+}).listen(port);
