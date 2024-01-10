@@ -1,9 +1,11 @@
 *.js
 !jest.config.js
+!bff-service/**/*.js
 *.d.ts
 node_modules
 coverage
 .vscode
+*.zip
 
 # CDK asset staging directory
 .cdk.staging
