@@ -4,7 +4,7 @@ import httpProxy from "http-proxy";
 import "dotenv/config";
 
 const rules = JSON.parse(process.env.RULES);
-const cachingMsecs = 20000;
+const cachingMsecs = 120000;
 
 const port = process.env.PORT || 3000;
 
